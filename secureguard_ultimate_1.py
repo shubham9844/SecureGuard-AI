@@ -83,7 +83,7 @@ def log_decision(text, flags, priority, decision):
 
 # --- 4. THE UI ARCHITECTURE ---
 
-st.title("🛡️ SecureGuard AI: Enterprise Dashboard")
+st.title("🛡️ SecureGuard AI: Data Labeling Dashboard")
 st.markdown("### Integrated AI Process & Analytics Suite")
 
 # TABS LAYOUT
