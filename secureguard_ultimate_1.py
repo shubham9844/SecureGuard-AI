@@ -25,7 +25,7 @@ def check_password():
 
 if not st.session_state['authenticated']:
     st.markdown("## 🔒 SecureGuard AI - Restricted Access")
-    st.markdown("This tool is a portfolio demo for Fusion CX recruitment.")
+    st.markdown("This tool is access to very few person")
     st.text_input("Enter Access Key:", type="password", key="password_input", on_change=check_password)
     st.stop() # Stops the app here if not logged in
 
