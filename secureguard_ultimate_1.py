@@ -6,7 +6,7 @@ import csv
 import os
 from datetime import datetime
 import plotly.express as px
-import time # NEW: For visual effects
+import time
 
 # --- 1. CONFIGURATION & STYLING ---
 st.set_page_config(
@@ -16,30 +16,31 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS to make it look "Hacker/Enterprise" style
+# FIXED CSS: Uses CSS Variables to adapt to Light/Dark Mode automatically
 st.markdown("""
 <style>
-    .main {
-        background-color: #f5f7f9;
+    /* Metric Cards: Adaptive Background + Border */
+    div[data-testid="metric-container"] {
+        background-color: var(--secondary-background-color);
+        border: 1px solid rgba(128, 128, 128, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        color: var(--text-color);
     }
+
+    /* Input Fields: Adaptive */
+    .stTextInput>div>div>input, .stTextArea>div>div>textarea {
+        background-color: var(--secondary-background-color);
+        color: var(--text-color);
+    }
+    
+    /* Buttons: Full Width */
     .stButton>button {
         width: 100%;
         border-radius: 5px;
         height: 3em;
         font-weight: bold;
-    }
-    .stTextInput>div>div>input {
-        background-color: #ffffff;
-    }
-    [data-testid="stSidebar"] {
-        background-color: #1e293b;
-        color: white;
-    }
-    .stMetric {
-        background-color: white;
-        padding: 10px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -50,17 +51,7 @@ LOG_FILE = "moderation_logs.csv"
 if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = False
 
-def check_password():
-    if st.session_state['password_input'] == "fusion2026":
-        st.session_state['authenticated'] = True
-        del st.session_state['password_input']
-        st.toast("✅ Access Granted: Loading SecureGuard Core...", icon="🔓")
-        time.sleep(1) # Fake loading delay for effect
-    else:
-        st.error("❌ Access Denied: Invalid Security Key")
-
 if not st.session_state['authenticated']:
-    # Advanced Login Screen
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -68,15 +59,30 @@ if not st.session_state['authenticated']:
         st.title("SecureGuard AI")
         st.markdown("### 🔒 Restricted Access Portal")
         st.warning("⚠️ This system is monitored. Authorized personnel only.")
-        st.text_input("Security Access Key:", type="password", key="password_input", on_change=check_password)
-        st.markdown("<div style='text-align: center; color: grey;'>Fusion CX • Internal Tool v2.4</div>", unsafe_allow_html=True)
+        
+        # --- NEW LOGIN FORM WITH BUTTON ---
+        with st.form("login_form"):
+            password_input = st.text_input("Security Access Key:", type="password", placeholder="Enter key...")
+            # This creates the button you asked for
+            submitted = st.form_submit_button("🔐 Login to System", type="primary")
+            
+            if submitted:
+                if password_input == "fusion2026":
+                    st.session_state['authenticated'] = True
+                    st.toast("✅ Access Granted: Loading SecureGuard Core...", icon="🔓")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("❌ Access Denied: Invalid Security Key")
+        
+        st.caption("Fusion CX • Internal Tool v2.4")
     st.stop()
 
 # ------------------------------------------------------------------
 # SYSTEM INTERFACE (LOGGED IN)
 # ------------------------------------------------------------------
 
-# --- SIDEBAR (THE "PRO" FEEL) ---
+# --- SIDEBAR (ADAPTIVE) ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/9632/9632386.png", width=60)
     st.title("SecureGuard")
@@ -91,7 +97,7 @@ with st.sidebar:
     
     st.divider()
     
-    # Live System Stats (Fake but impressive)
+    # Live System Stats
     st.markdown("### 🖥️ System Health")
     st.progress(88, text="CPU Usage")
     st.progress(42, text="Memory Usage")
@@ -158,7 +164,6 @@ with col_head1:
     st.title("🛡️ Data Labeling Dashboard")
     st.markdown("**Active Task:** `Content Moderation` | **Queue:** `Real-time Stream`")
 with col_head2:
-    # Real-time clock
     st.markdown(f"**🕒 {datetime.now().strftime('%H:%M:%S')}**")
     st.caption(f"Date: {datetime.now().strftime('%Y-%m-%d')}")
 
@@ -169,7 +174,6 @@ tab1, tab2, tab3 = st.tabs(["⚡ Live Moderator", "📈 Analytics Hub", "📂 Ba
 with tab1:
     st.markdown("#### 💬 Incoming Data Stream")
     
-    # Layout: Input on left, Instructions on right
     c1, c2 = st.columns([2, 1])
     
     with c2:
@@ -187,7 +191,7 @@ with tab1:
         if st.button("🔍 Run Analysis", type="primary", use_container_width=True):
             if user_input:
                 with st.spinner('Running NLP & Regex Engines...'):
-                    time.sleep(0.5) # Fake processing time for "feel"
+                    time.sleep(0.5) 
                     result = analyze_content(user_input)
                     st.session_state['result'] = result
                     st.session_state['text'] = user_input
@@ -205,7 +209,7 @@ with tab1:
         m1.metric("Priority Level", res['Priority'], delta="Urgent" if res['Priority']=="CRITICAL" else None, delta_color="inverse")
         m2.metric("Sentiment Score", res['Sentiment'])
         m3.metric("Flags Count", len(res['Flags']))
-        m4.metric("Confidence", "98.5%") # Hardcoded for demo flair
+        m4.metric("Confidence", "98.5%") 
         
         if res['Flags']:
             st.error(f"🚫 **VIOLATIONS DETECTED:** {', '.join(res['Flags'])}")
@@ -237,21 +241,20 @@ with tab2:
         df = pd.read_csv(LOG_FILE)
         
         if not df.empty:
-            # Top Stats Row
             k1, k2, k3, k4 = st.columns(4)
             k1.metric("Total Processed", len(df))
             k2.metric("Violations", len(df[df['Decision'] == 'VIOLATION']), delta_color="inverse")
             k3.metric("Safe Content", len(df[df['Decision'] == 'SAFE']))
-            k4.metric("Efficiency", f"{len(df) * 1.2} sec") # Fake efficiency stat
+            k4.metric("Efficiency", f"{len(df) * 1.2} sec")
 
             st.divider()
             
-            # Charts
             chart1, chart2 = st.columns(2)
             with chart1:
                 st.markdown("**Decisions Breakdown**")
                 if 'Decision' in df.columns:
-                    fig_pie = px.pie(df, names='Decision', hole=0.4, color='Decision', color_discrete_map={'SAFE':'#00CC96', 'VIOLATION':'#EF553B'})
+                    fig_pie = px.pie(df, names='Decision', hole=0.4, color='Decision', 
+                                     color_discrete_map={'SAFE':'#00CC96', 'VIOLATION':'#EF553B'})
                     st.plotly_chart(fig_pie, use_container_width=True)
                 
             with chart2:
@@ -283,12 +286,10 @@ with tab3:
                 if st.button("🚀 Start Batch Processing"):
                     progress_bar = st.progress(0, text="Initializing AI Models...")
                     
-                    # Simulation of progress
                     for percent_complete in range(0, 100, 20):
                         time.sleep(0.1)
                         progress_bar.progress(percent_complete + 20, text=f"Processing chunk {percent_complete}%...")
                     
-                    # Actual Processing
                     batch_results = batch_df['Comment'].apply(lambda x: pd.Series(analyze_content(x)))
                     final_batch = pd.concat([batch_df, batch_results], axis=1)
                     
